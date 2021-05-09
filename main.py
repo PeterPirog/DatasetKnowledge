@@ -97,6 +97,9 @@ class DatasetKnowledge():
             self.__remove_label_from_lists(feature)
         self.__update_XY()
 
+    def feature_to_categorical(self,features_list):
+        pass
+
     def show_moments(self):
         #Function shows std, skewness and curtosis
         pass
@@ -106,6 +109,8 @@ class DatasetKnowledge():
         pass
 
 # Press the green button in the gutter to run the script.
+
+
 if __name__ == '__main__':
     dataset = DatasetKnowledge(csv_file_path='train.csv')
 
