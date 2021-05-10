@@ -1,4 +1,5 @@
 import pandas as pd
+from collections import OrderedDict
 
 
 class DatasetKnowledge():
@@ -32,6 +33,9 @@ class DatasetKnowledge():
         self.categorical_features_nominal_number=len(self.categorical_features_nominal)
         self.categorical_features_ordinal = []
         self.categorical_features_ordinal_number=0
+
+        self.cardinality={}
+        self.categorical_features_unique_labels={}
 
         #Other features
         self.features_text = []
@@ -82,6 +86,10 @@ class DatasetKnowledge():
         print(f'\t\t Categorical features number (nominal): {self.categorical_features_nominal_number}')
         print(f'\t\t Categorical features number (ordinal): {self.categorical_features_ordinal_number}')
         print(f'\tText features number: {self.features_text_number}')
+        print('-------------------------------------------------')
+        print(f'Numerical values: {dataset.numerical_features}')
+        print(f'Categorical values: {dataset.categorical_features}')
+        self.show_cardinality()
 
 
     def define_targets(self, targets_list):
@@ -105,6 +113,18 @@ class DatasetKnowledge():
         pass
     def show_cardinality(self):
         pass
+        self.cardinality=self.X[self.categorical_features].nunique().to_dict()
+        self.cardinality = sorted(self.cardinality.items(), key=lambda x: x[1], reverse=True)
+        print('\n Categorical features cardinality:')
+        for i in self.cardinality:
+            key=i[0]
+            value=i[1]
+            #write existing labels for specific categorical feature
+            self.categorical_features_unique_labels[key]=self.X[key].unique()
+            print(key, value)
+
+
+        pass
     def show_missing_values(self):
         pass
     def show_correlation(self):
@@ -125,5 +145,7 @@ if __name__ == '__main__':
     print(dataset.X.head(10))
     print(dataset.Y)
     dataset.show_info()
-    print(f'Numerical values: {dataset.numerical_features}')
-    print(f'Categorical values: {dataset.categorical_features}')
+
+    #dataset.show_cardinality()
+    #print(dataset.X['CentralAir'].unique())
+    #print(dataset.categorical_features_unique_labels)
