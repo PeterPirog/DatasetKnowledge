@@ -107,6 +107,8 @@ class DatasetKnowledge():
         pass
     def show_missing_values(self):
         pass
+    def show_correlation(self):
+        pass
 
 # Press the green button in the gutter to run the script.
 
