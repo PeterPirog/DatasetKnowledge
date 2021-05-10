@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from statsmodels.distributions.empirical_distribution import ECDF
-
+#https://towardsdatascience.com/pipelines-custom-transformers-in-scikit-learn-the-step-by-step-guide-with-python-code-4a7d9b068156
 
 if __name__ == '__main__':
     num_features=["Number1","Number2", "Number3"]
