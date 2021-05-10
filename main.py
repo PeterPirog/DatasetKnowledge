@@ -8,7 +8,7 @@ class DatasetKnowledge():
 
         self.file_path = csv_file_path
         self.data_original = pd.read_csv(self.file_path)
-        self.X = self.data_original
+        self.X = self.data_original.copy()
         self.Y = pd.DataFrame()
         self.columns = self.data_original.columns.to_list()
         self.columns_number=len(self.columns)
@@ -45,8 +45,8 @@ class DatasetKnowledge():
 
 
     def __update_XY(self):
-        self.X=self.data_original[self.features]
-        self.Y=self.data_original[self.targets]
+        self.X=self.data_original[self.features].copy()
+        self.Y=self.data_original[self.targets].copy()
         self.features_number=len(self.features)
         self.targets_number=len(self.targets)
 
