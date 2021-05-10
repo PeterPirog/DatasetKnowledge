@@ -41,11 +41,11 @@ if __name__ == '__main__':
     # now you can import normally from sklearn.impute
     from sklearn.impute import IterativeImputer
 
-    imp_mean = IterativeImputer(min_value=0,  # values from 0 to 1 for categorical for numeric -np.inf
-                                max_value=1,# values from 0 to 1 for categorical for numeric np.inf
+    imp_mean = IterativeImputer(min_value=-np.inf,  # values from 0 to 1 for categorical for numeric
+                                max_value=np.inf,
                                 random_state=0,
                                 max_iter=100,
-                                tol=1e-3,
+                                tol=1e-6,
                                 verbose=2)
 
     df_imputed=imp_mean.fit_transform(df)
