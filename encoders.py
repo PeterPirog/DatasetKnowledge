@@ -31,6 +31,7 @@ class CdfEncoder(BaseEstimator, TransformerMixin):
         self.categories = categories
         self.drop = drop
         self.dtype = dtype
+        self.new_categories=[]
 
     def fit(self, X, y=None):
         X = X.copy()
@@ -51,11 +52,12 @@ class CdfEncoder(BaseEstimator, TransformerMixin):
                 pass
             for label in labels:
                 new_label = str(category) + '_' + str(label)
+                self.new_categories.append(new_label)
                 X[new_label] = np.where(X[category] == label, 1, 0)
                 X.loc[X[category].isna(), new_label] = np.nan
         if self.drop:
             X = X.drop(columns=self.categories)  # drop encoded columns
-        X=X[self.categories].astype(self.dtype)
+        X[self.new_categories]=X[self.new_categories].astype(self.dtype)
         return X
 
 
@@ -66,7 +68,7 @@ if __name__ == '__main__':
     df = pd.DataFrame(data=X, columns=columns)
     print(df.head())
 
-    cdf = CdfEncoder(categories='auto', drop=True, dtype=np.float64) #'auto'
+    cdf = CdfEncoder(categories='auto', drop=True, dtype=np.float32) #'auto'
     cdf.fit(X=df)
     out=cdf.fit_transform(X=df)
     print(out.info())
