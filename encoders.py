@@ -15,7 +15,7 @@ class OneHotNanEncoder(BaseEstimator, TransformerMixin):
         self.categories = categories
         self.drop = drop
         self.dtype = dtype
-        self.new_categories=[]
+        self.new_categories = []
 
     def fit(self, X, y=None):
         X = X.copy()
@@ -40,17 +40,19 @@ class OneHotNanEncoder(BaseEstimator, TransformerMixin):
                 X.loc[X[category].isna(), new_label] = np.nan
         if self.drop:
             X = X.drop(columns=self.categories)  # drop encoded columns
-        X[self.new_categories]=X[self.new_categories].astype(self.dtype)
+        X[self.new_categories] = X[self.new_categories].astype(self.dtype)
         return X
 
+
 class CDFEncoder(BaseEstimator, TransformerMixin):
-    def __init__(self, numerical_features='auto', dtype=np.float64):
+    def __init__(self, numerical_features='auto', drop=True, dtype=np.float64):
         super().__init__()
         self.numerical_features = numerical_features
-
+        self.drop = drop
+        self.ecdf_dict = {}
 
         self.dtype = dtype
-        self.new_categories=[]
+        self.new_categories = []
 
     def fit(self, X, y=None):
         X = X.copy()
@@ -58,41 +60,62 @@ class CDFEncoder(BaseEstimator, TransformerMixin):
             self.numerical_features = X.select_dtypes(include=np.number).columns.tolist()
 
         for feature in self.numerical_features:
-            x=X[feature]
-            #idx_nan = x.loc[pd.isna(x[feature]), :].index
-            #print(f'Feature: {feature}, nan idx: {idx_nan} ')
+            self.ecdf_dict[feature] = ECDF(
+                X[feature])  # train experimental cuu=mulative distribution function for each feature
 
-        print(f'self.numerical_features= {self.numerical_features}')
         return self
 
     def transform(self, X, y=None):
-
+        pd.options.mode.chained_assignment = None  # default='warn' - turn off warning about overwrited data
+        for key in self.ecdf_dict:
+            x = X[key].copy()
+            experimental_cdf = self.ecdf_dict[key]
+            idx_nan = x.loc[pd.isnull(x)].index  # find nan values in analyzed feature column
+            X[key + '_cdf'] = experimental_cdf(x)
+            X[key + '_cdf'].loc[idx_nan] = np.nan  # prevent setting CDF value=1 for nan values
+        pd.options.mode.chained_assignment = 'warn'  # - turn on warning about overwrited data
+        if self.drop:
+            X = X.drop(columns=self.numerical_features)  # drop encoded columns
 
         return X
 
+
 if __name__ == '__main__':
-
-    columns = ["Number","Sex", "Country","Temperature"]
-    X = [[1.0,np.nan, 'Germany',"Heat"], [2.0,'Male', np.nan,"Warm"], [2.0,'Female', 'Poland',"Cold"], [0.5,'Female', 'Brasil',"Unknown"], [0.3,np.nan, 'Poland',np.nan]]
+    columns = ["Number", "Sex", "Country", "Temperature"]
+    """
+    Number - numeric feature
+    Sex,Country - categorical nominal feature
+    Temperature - categorical ordinal feature
+    """
+    X = [[1.0, np.nan, 'Germany', "Heat"], [2.0, 'Male', np.nan, "Warm"], [2.0, 'Female', 'Poland', "Cold"],
+         [0.5, 'Female', 'Brasil', "Unknown"], [0.3, np.nan, 'Poland', np.nan]]
     df = pd.DataFrame(data=X, columns=columns)
-    print(df.head())
 
-    ohne = OneHotNanEncoder(categories=["Number","Sex", "Country","Temperature"], drop=True, dtype=np.float32) #'auto'
-    cdfe=CDFEncoder(numerical_features='auto', dtype=np.float64)
-    ohne.fit(X=df)
-    out=ohne.fit_transform(X=df)
-    out=cdfe.fit_transform(out)
+    df = pd.read_csv('train.csv')
 
+    ohne = OneHotNanEncoder(categories='auto', drop=True, dtype=np.float32)  # 'auto' categories=["Sex", "Country"]
+    cdfe = CDFEncoder(numerical_features='auto', dtype=np.float64)
 
+    #print('ORIGINAL HEAD \n', df.head())
+    out = ohne.fit_transform(X=df)
+    out = cdfe.fit_transform(out)
 
-    print(out.info())
-    print(out.head())
-"""
-    for feature in num_features:
-        x=df[feature]
-        idx=df.loc[pd.isna(df[feature]), :].index
-        ecdf = ECDF(x)
-        output=ecdf(x)
-        output[idx]=np.nan
-        print(f'idx={idx}')
-        print(f' ECDF:{output}')"""
+    print('INFO \n', out.info())
+    #print('HEAD \n', out.head())
+
+    # explicitly require this experimental feature
+    from sklearn.experimental import enable_iterative_imputer  # noqa
+    # now you can import normally from sklearn.impute
+    from sklearn.impute import IterativeImputer
+
+    imp_mean = IterativeImputer(min_value=0,
+                                max_value=1,
+                                random_state=0,
+                                max_iter=100,
+                                tol=1e-6,
+                                verbose=2)
+
+    df_imputed=imp_mean.fit_transform(out)
+    df_imputed=pd.DataFrame(data=df_imputed)
+
+    df_imputed.to_csv(path_or_buf='train_imputed.csv')
