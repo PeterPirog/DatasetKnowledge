@@ -6,26 +6,8 @@ import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 
 
-class CustomScaler(BaseEstimator, TransformerMixin):
-    def __init__(self):
-        super().__init__()
-        self.means_ = None
-        self.std_ = None
 
-    def fit(self, X, y=None):
-        X = X.to_numpy()
-        self.means_ = X.mean(axis=0, keepdims=True)
-        self.std_ = X.std(axis=0, keepdims=True)
-
-        return self
-
-    def transform(self, X, y=None):
-        X[:] = (X.to_numpy() - self.means_) / self.std_
-
-        return X
-
-
-class CdfEncoder(BaseEstimator, TransformerMixin):
+class OneHotNanEncoder(BaseEstimator, TransformerMixin):
     def __init__(self, categories='auto', drop=False, dtype=np.float64):
         super().__init__()
         self.categories = categories
@@ -68,7 +50,8 @@ if __name__ == '__main__':
     df = pd.DataFrame(data=X, columns=columns)
     print(df.head())
 
-    cdf = CdfEncoder(categories='auto', drop=True, dtype=np.float32) #'auto'
+    cdf = OneHotNanEncoder(categories='auto', drop=False, dtype=np.float32) #'auto'
     cdf.fit(X=df)
     out=cdf.fit_transform(X=df)
     print(out.info())
+    print(out.head())
