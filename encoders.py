@@ -2,6 +2,8 @@
 # https://towardsdatascience.com/pipelines-custom-transformers-in-scikit-learn-the-step-by-step-guide-with-python-code-4a7d9b068156
 
 import pandas as pd
+#import modin.pandas as pd
+#import ray
 import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 from statsmodels.distributions.empirical_distribution import ECDF
@@ -81,6 +83,7 @@ class CDFEncoder(BaseEstimator, TransformerMixin):
 
 
 if __name__ == '__main__':
+    #ray.init()
     columns = ["Number", "Sex", "Country", "Temperature"]
     """
     Number - numeric feature
