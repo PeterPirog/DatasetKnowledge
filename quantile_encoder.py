@@ -1,4 +1,5 @@
 import pandas as pd
+import scipy.stats
 
 pd.set_option('display.max_columns', None)
 
@@ -12,6 +13,7 @@ from sklearn.impute import IterativeImputer
 
 from sklearn.preprocessing import QuantileTransformer
 from sklearn.base import BaseEstimator, TransformerMixin
+from scipy.stats import beta,skew
 
 
 
@@ -94,9 +96,21 @@ if __name__ == '__main__':
 
     # show X_train data
     X_trans.hist(bins=50, figsize=(10, 10))
-    plt.show()
+    #plt.show()
     X_train.hist(bins=50, figsize=(10, 10))
-    plt.show()
+    #plt.show()
     X_trans.to_excel("output.xlsx")
     print(X_train.skew(numeric_only=True),'\n')
     print(X_trans.skew(numeric_only=True))
+
+    input=X_trans['MSSubClass_qnt'].to_numpy().flatten()
+
+    a=1
+    b=8
+    output=beta.pdf(input, a, b, loc=0, scale=1)
+    print(f'output type: {type(output)}')
+    print('skew=',skew(output,axis=0))
+    print(np.hist(output))
+
+
+
