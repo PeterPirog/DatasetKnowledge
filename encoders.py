@@ -1,5 +1,6 @@
 # https://towardsdatascience.com/pipelines-custom-transformers-in-scikit-learn-ef792bbb3260
 # https://towardsdatascience.com/pipelines-custom-transformers-in-scikit-learn-the-step-by-step-guide-with-python-code-4a7d9b068156
+#https://queirozf.com/entries/scikit-learn-pipelines-custom-pipelines-and-pandas-integration
 
 import pandas as pd
 #import modin.pandas as pd
