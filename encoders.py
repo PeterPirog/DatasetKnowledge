@@ -2,8 +2,8 @@
 # https://towardsdatascience.com/pipelines-custom-transformers-in-scikit-learn-the-step-by-step-guide-with-python-code-4a7d9b068156
 
 import pandas as pd
-#import modin.pandas as pd
-#import ray
+import warnings
+
 import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 from statsmodels.distributions.empirical_distribution import ECDF
@@ -82,50 +82,85 @@ class CDFEncoder(BaseEstimator, TransformerMixin):
 
         return X
 
+
 class RareLabelNanEncoder(BaseEstimator, TransformerMixin):
-    def __init__(self, categories=None,tol=0.05, n_categories=10, max_n_categories=None, replace_with='Rare',impute_missing_label=False):
+    """This function based on:
+    https://feature-engine.readthedocs.io/en/latest/encoding/RareLabelEncoder.html
+    Additionally makes possible rare label encoding even with missing values,
+    if impute_missing_label=False missing values in output dataframe is np.nan
+    if impute_missing_label=True missing values in output dataframe is 'MISSING
+
+    """
+
+    def __init__(self, categories=None, tol=0.05, minimum_occurrences=None, n_categories=10, max_n_categories=None,
+                 replace_with='Rare', impute_missing_label=False, additional_categories_list=None):
+        """
+        :param categories: 
+        :param tol: The minimum frequency a label should have to be considered frequent. Categories with frequencies lower than tol will be grouped
+        :param minimum_occurrences: defined minimum number of value occurrences for single feature
+        :param n_categories: The minimum number of categories a variable should have for the encoder to find frequent labels. If the variable contains less categories, all of them will be considered frequent.
+        :param max_n_categories: The maximum number of categories that should be considered frequent. If None, all categories with frequency above the tolerance (tol) will be considered frequent.
+        :param replace_with: The category name that will be used to replace infrequent categories.
+        :param impute_missing_label: if  False missing values in output dataframe is np.nan if True missing values in output dataframe is 'MISSING
+        :param additional_categories_list: add list with feature if you want  feature for default founded categorical features
+        """
         super().__init__()
         self.categories = categories
-        self.impute_missing_label=impute_missing_label
-        #original RareLabelEncoder parameters
-        self.tol=tol
-        self.n_categories=n_categories
-        self.max_n_categories=max_n_categories
-        self.replace_with=replace_with
-
+        self.additional_categories_list = additional_categories_list
+        self.impute_missing_label = impute_missing_label
+        # original RareLabelEncoder parameters
+        self.tol = tol
+        self.n_categories = n_categories
+        self.max_n_categories = max_n_categories
+        self.replace_with = replace_with
 
         self.new_categories = []
+        self.number_of_samples=None
+        self.minimum_occurrences=minimum_occurrences
 
     def fit(self, X, y=None):
         X = X.copy()
+        self.number_of_samples=X.shape[0] #number of rows in dataframe
+        print(f'self.number_of_samples={self.number_of_samples}')
         if self.categories is None:
             self.categories = X.select_dtypes(include=['object']).columns.tolist()
+            # option to add some feature if you need
+            if self.additional_categories_list is not None:
+                self.categories = self.categories + self.additional_categories_list
+
+        if self.minimum_occurrences is not None:
+            self.tol=float(self.minimum_occurrences/self.number_of_samples)
+            print(f'Value of minimum_occurrences is defined. New value of tol is:{self.tol}')
 
         return self
+
     def transform(self, X, y=None):
-        #pd.options.mode.chained_assignment = None  # default='warn' - turn off warning about overwrited data
+        pd.options.mode.chained_assignment = None  # default='warn' - turn off warning about overwrited data
         for category in self.categories:
-            x = X[category].copy() #not use copy to intentionaly change value
+            x = X[category].copy()  # not use copy to intentionaly change value
             idx_nan = x.loc[pd.isnull(x)].index  # find nan values in analyzed feature column
-            print(f'idx_nan for {category} is {idx_nan}')
-            #replace missing values
-            x[idx_nan]='MISS'
-            encoder=RareLabelEncoder(tol=self.tol, n_categories=self.n_categories,max_n_categories=self.max_n_categories,
-                           replace_with=self.replace_with)
+            # print(f'idx_nan for {category} is {idx_nan}')
+            # replace missing values
+            x[idx_nan] = 'MISS'
+            warnings.simplefilter("ignore")
+            warnings.filterwarnings(action="ignore")
+            encoder = RareLabelEncoder(tol=self.tol, n_categories=self.n_categories,
+                                       max_n_categories=self.max_n_categories,
+                                       replace_with=self.replace_with)
+            warnings.filterwarnings("default")
 
-
-            x=x.to_frame(name=category)  # convert pd.series to dataframe
+            x = x.to_frame(name=category)  # convert pd.series to dataframe
             x = encoder.fit_transform(x)
             X[category] = x
             if not self.impute_missing_label:
                 X[category].loc[idx_nan] = np.nan
-            print('x type is ', type(x))
-
+            # print('x type is ', type(x))
+        pd.options.mode.chained_assignment = 'warn'  # default='warn' - turn off warning about overwrited data
         return X
 
 
 if __name__ == '__main__':
-    #ray.init()
+
     columns = ["Number", "Sex", "Country", "Temperature"]
     """
     Number - numeric feature
@@ -138,12 +173,12 @@ if __name__ == '__main__':
 
     df = pd.read_csv('train.csv')
 
-    rl_enc=RareLabelNanEncoder(categories=None,tol=0.05, n_categories=10, max_n_categories=None,
-                               replace_with='Rare',impute_missing_label=False)
+    rl_enc = RareLabelNanEncoder(categories=None, tol=0.05,minimum_occurrences=None, n_categories=10, max_n_categories=None,
+                                 replace_with='Rare', impute_missing_label=False,additional_categories_list=['MSSubClass'])
 
     print('ORIGINAL HEAD \n', df.head())
 
-    out=rl_enc.fit_transform(df)
+    out = rl_enc.fit_transform(df)
 
     print('MODIFIED HEAD \n', out.head())
     """
