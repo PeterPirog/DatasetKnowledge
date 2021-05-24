@@ -2,8 +2,6 @@
 # https://towardsdatascience.com/pipelines-custom-transformers-in-scikit-learn-the-step-by-step-guide-with-python-code-4a7d9b068156
 
 import pandas as pd
-import warnings
-
 import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 from statsmodels.distributions.empirical_distribution import ECDF
@@ -108,26 +106,28 @@ class RareLabelNanEncoder(BaseEstimator, TransformerMixin):
         self.categories = categories
         self.additional_categories_list = additional_categories_list
         self.impute_missing_label = impute_missing_label
+        self.new_categories = []
+        self.number_of_samples=None
+        self.minimum_occurrences=minimum_occurrences
+
         # original RareLabelEncoder parameters
         self.tol = tol
         self.n_categories = n_categories
         self.max_n_categories = max_n_categories
         self.replace_with = replace_with
 
-        self.new_categories = []
-        self.number_of_samples=None
-        self.minimum_occurrences=minimum_occurrences
 
     def fit(self, X, y=None):
         X = X.copy()
         self.number_of_samples=X.shape[0] #number of rows in dataframe
-        print(f'self.number_of_samples={self.number_of_samples}')
+
         if self.categories is None:
             self.categories = X.select_dtypes(include=['object']).columns.tolist()
-            # option to add some feature if you need
+            # option to add some additional feature if you need
             if self.additional_categories_list is not None:
                 self.categories = self.categories + self.additional_categories_list
 
+        #option to define minimum value occurrence for single feature- usefull for huge datasets with high cardinality
         if self.minimum_occurrences is not None:
             self.tol=float(self.minimum_occurrences/self.number_of_samples)
             print(f'Value of minimum_occurrences is defined. New value of tol is:{self.tol}')
@@ -135,19 +135,16 @@ class RareLabelNanEncoder(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
-        pd.options.mode.chained_assignment = None  # default='warn' - turn off warning about overwrited data
+        pd.options.mode.chained_assignment = None  # default='warn' - turn off warning about  data overwrite
         for category in self.categories:
-            x = X[category].copy()  # not use copy to intentionaly change value
+            x = X[category].copy()  # not use copy to intentionally change value
             idx_nan = x.loc[pd.isnull(x)].index  # find nan values in analyzed feature column
-            # print(f'idx_nan for {category} is {idx_nan}')
+
             # replace missing values
             x[idx_nan] = 'MISS'
-            warnings.simplefilter("ignore")
-            warnings.filterwarnings(action="ignore")
             encoder = RareLabelEncoder(tol=self.tol, n_categories=self.n_categories,
                                        max_n_categories=self.max_n_categories,
                                        replace_with=self.replace_with)
-            warnings.filterwarnings("default")
 
             x = x.to_frame(name=category)  # convert pd.series to dataframe
             x = encoder.fit_transform(x)
