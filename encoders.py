@@ -225,4 +225,4 @@ if __name__ == '__main__':
     df_imputed.to_csv(path_or_buf='train_imputed.csv')
     
     """
-
+    out.to_excel("output.xlsx")

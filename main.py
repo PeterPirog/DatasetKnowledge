@@ -32,6 +32,7 @@ class DatasetKnowledge():
         self.categorical_features_nominal = self.categorical_features #in the first step we assume that data are nominal
         self.categorical_features_nominal_number=len(self.categorical_features_nominal)
         self.categorical_features_ordinal = []
+        self.categorical_features_ordinal_dict = {}
         self.categorical_features_ordinal_number=0
 
         self.cardinality={}
@@ -43,8 +44,26 @@ class DatasetKnowledge():
         self.features_removed = []
         self.features_removed_number=len(self.features_removed)
 
+    def add_ordinal_category(self,label,ordered_feature_value_list):
+        self.__remove_label_from_lists(label)
+        self.categorical_features.append(label)
+        self.categorical_features_ordinal.append(label)
+        self.categorical_features_ordinal_dict[label]=ordered_feature_value_list
+
+        for key in ordered_feature_value_list:
+            if key in self.X[label]:
+                pass
+            else:
+                print(f'Warning value: {key} not exist in column named: {label}')
+
+        self.__update_XY()
+
 
     def __update_XY(self):
+        """
+        Function count number of numerical and categorical features
+        :return:
+        """
         self.X=self.data_original[self.features].copy()
         self.Y=self.data_original[self.targets].copy()
         self.features_number=len(self.features)
@@ -69,6 +88,8 @@ class DatasetKnowledge():
             self.categorical_features.remove(label)
             self.categorical_features_nominal.remove(label)
             self.categorical_features_ordinal.remove(label)
+            if label in self.categorical_features_ordinal_dict:
+                del self.categorical_features_ordinal_dict[label]
             self.features_text.remove(label)
         except:
             pass
@@ -136,7 +157,7 @@ class DatasetKnowledge():
 if __name__ == '__main__':
     dataset = DatasetKnowledge(csv_file_path='train.csv')
 
-    print(dataset.features)
+    print('\n dataset.features=',dataset.features)
     dataset.define_targets(['SalePrice'])
     print(dataset.features)
 
@@ -146,6 +167,6 @@ if __name__ == '__main__':
     print(dataset.Y)
     dataset.show_info()
 
-    #dataset.show_cardinality()
-    #print(dataset.X['CentralAir'].unique())
-    #print(dataset.categorical_features_unique_labels)
+    categorical_labels=dataset.categorical_features
+
+

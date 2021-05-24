@@ -34,6 +34,7 @@ if __name__ == '__main__':
     b=4.5617472
     out_norm=beta.pdf(output, a, b, loc=0, scale=1)
     print(f'Out norm={skew(out_norm)}')
+    print('beta',beta.fit(sample))
 
     def objective(x):
         sample = np.array([1.0, 0.2, 1.4, 2.5, 0.3, 3.7, 0.02, 3.0, 3.0, 3.0, 3.0, 5.0])
