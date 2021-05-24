@@ -27,7 +27,7 @@ class StandardScalerDf(StandardScaler):
         z = super(StandardScalerDf, self).transform(X.values)
         return pd.DataFrame(z, index=X.index, columns=X.columns)
 
-
+"""
 class OneHotNanEncoder(BaseEstimator, TransformerMixin):
     def __init__(self, categories='auto', drop=False, dtype=np.float64):
         super().__init__()
@@ -61,7 +61,7 @@ class OneHotNanEncoder(BaseEstimator, TransformerMixin):
             X = X.drop(columns=self.categories)  # drop encoded columns
         X[self.new_categories] = X[self.new_categories].astype(self.dtype)
         return X
-
+"""
 
 class CDFEncoder(BaseEstimator, TransformerMixin):
     def __init__(self, numerical_features='auto', drop=True, dtype=np.float64):

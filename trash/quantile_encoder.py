@@ -76,7 +76,7 @@ class QuantileTransformer2(BaseEstimator, TransformerMixin):
 
 if __name__ == '__main__':
     # load training data
-    data = pd.read_csv('train.csv')
+    data = pd.read_csv('../train.csv')
 
     # split training data into train and test
 
