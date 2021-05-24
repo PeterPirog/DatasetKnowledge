@@ -1,13 +1,31 @@
 # https://towardsdatascience.com/pipelines-custom-transformers-in-scikit-learn-ef792bbb3260
 # https://towardsdatascience.com/pipelines-custom-transformers-in-scikit-learn-the-step-by-step-guide-with-python-code-4a7d9b068156
 
+#http://flennerhag.com/2017-01-08-Recursive-Override/
+#https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.QuantileTransformer.html
+
 import pandas as pd
 import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.preprocessing import StandardScaler,QuantileTransformer
 from statsmodels.distributions.empirical_distribution import ECDF
 from feature_engine.encoding import RareLabelEncoder
 
+
+
 pd.set_option('display.max_columns', None)
+
+class StandardScalerDf(StandardScaler):
+    """DataFrame Wrapper around StandardScaler"""
+
+    def __init__(self, copy=True, with_mean=True, with_std=True):
+        super(StandardScalerDf, self).__init__(copy=copy,
+                                               with_mean=with_mean,
+                                               with_std=with_std)
+
+    def transform(self, X, y=None):
+        z = super(StandardScalerDf, self).transform(X.values)
+        return pd.DataFrame(z, index=X.index, columns=X.columns)
 
 
 class OneHotNanEncoder(BaseEstimator, TransformerMixin):
@@ -207,3 +225,4 @@ if __name__ == '__main__':
     df_imputed.to_csv(path_or_buf='train_imputed.csv')
     
     """
+
