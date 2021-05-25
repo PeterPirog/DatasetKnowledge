@@ -7,7 +7,7 @@ from sklearn.experimental import enable_iterative_imputer  # noqa
 # now you can import normally from sklearn.impute
 from sklearn.impute import IterativeImputer
 from sklearn.pipeline import Pipeline
-from Transformers import QuantileTransformerDf, IterativeImputerDf, OneHotNanEncoder, RareLabelNanEncoder
+from Transformers import QuantileTransformerDf, IterativeImputerDf, RareLabelNanEncoder
 from category_encoders import OneHotEncoder
 
 if __name__ == '__main__':
@@ -27,9 +27,8 @@ if __name__ == '__main__':
                               replace_with='Rare', impute_missing_label=False, additional_categories_list=None)
 
     # STEP 2 - categorical features one hot encoding
-    ohe = OneHotNanEncoder(categories='auto', drop=True, dtype=np.float64)
-
-    ohe2=OneHotEncoder(verbose=0, cols=None, drop_invariant=False, return_df=True,
+    #https://github.com/scikit-learn-contrib/category_encoders/blob/master/category_encoders/one_hot.py
+    ohe=OneHotEncoder(verbose=0, cols=None, drop_invariant=False, return_df=True,
                  handle_missing='return_nan', #options are 'error', 'return_nan', 'value', and 'indicator'.
                        handle_unknown='return_nan',#options are 'error', 'return_nan', 'value', and 'indicator'
                        use_cat_names=False)
@@ -48,9 +47,9 @@ if __name__ == '__main__':
 
     pipe = Pipeline([
         ('rare_lab', rle),
-        ('one_hot', ohe2),
-        #('q_trans', q_trans),
-        #('imputer', imp)
+        ('one_hot', ohe),
+        ('q_trans', q_trans),
+        ('imputer', imp)
     ])
 
     pipe.fit(df)
@@ -70,4 +69,4 @@ if __name__ == '__main__':
     df_test_imputed=loaded_pipe.transform(df_test)
 
     print(f'df_test_original=\n{df_test}')
-    print(f'df_test_imputed=\n{df_test_imputed}')
+    print(f'df_test_imputed=\n{df_test_imputed.head()}')
