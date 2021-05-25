@@ -4,6 +4,10 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import QuantileTransformer
 from feature_engine.encoding import RareLabelEncoder
 
+from sklearn.experimental import enable_iterative_imputer  # noqa
+# now you can import normally from sklearn.impute
+from sklearn.impute import IterativeImputer
+
 
 class QuantileTransformerDf(QuantileTransformer):
     """DataFrame Wrapper around QuantileTransformer
@@ -134,4 +138,29 @@ class OneHotNanEncoder(BaseEstimator, TransformerMixin):
         X[self.new_categories] = X[self.new_categories].astype(self.dtype)
         return X
 
+class IterativeImputerDf(IterativeImputer):
+    """DataFrame Wrapper around QuantileTransformer
+    Function based on: https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.QuantileTransformer.html
+    """
 
+    def __init__(self, min_value=-np.inf,  # values from 0 to 1 for categorical for numeric
+                 max_value=np.inf,
+                 random_state=42,
+                 max_iter=10,
+                 tol=1e-3,
+                 verbose=1, dataframe_as_output=True):
+        super(IterativeImputerDf, self).__init__(min_value=min_value,
+                                                 max_value=max_value,
+                                                 random_state=random_state,
+                                                 max_iter=max_iter,
+                                                 tol=tol,
+                                                 verbose=verbose)
+        self.dataframe_as_output = dataframe_as_output
+
+    def transform(self, X, y=None):
+        z = super(IterativeImputerDf, self).transform(X.values)
+
+        if self.dataframe_as_output:
+            return pd.DataFrame(z, index=X.index, columns=X.columns)
+        else:
+            return z
