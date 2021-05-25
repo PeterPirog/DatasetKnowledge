@@ -25,18 +25,22 @@ class IterativeImputerDf(IterativeImputer):
                                                  tol=tol,
                                                  verbose=verbose)
         self.dataframe_as_output = dataframe_as_output
-
+        self.columns=X.columns
+        print(f'X.columns={self.columns}')
     def transform(self, X, y=None):
+        print(f'X.columns={self.columns}')
         z = super(IterativeImputerDf, self).transform(X.values)
+
         if self.dataframe_as_output:
-            return pd.DataFrame(z, index=X.index, columns=X.columns)
+            #return pd.DataFrame(z, index=X.index, columns=X.columns)
+            return pd.DataFrame(z, columns=X.columns)
         else:
-            return z
+            return pd.DataFrame(z, index=X.index, columns=X.columns)
 
 
 if __name__ == '__main__':
     pd.set_option('display.max_columns', None)
-
+    """
     columns = ["Number", "Sex", "Country"]
     cat_features = ["Sex", "Country"]
     num_features = ["Number"]
@@ -67,7 +71,7 @@ if __name__ == '__main__':
     print(df.head())
     new_columns = df.columns.to_list()
     print(new_columns)
-
+    """
     columns = ["F1", "F2", "F3", "F4"]
 
     X = [[1.0, np.nan, 0.2, 1.1], [2.0, 0.35, np.nan, 1.12], [2.5, 3, 2.32, 8.2],
@@ -83,5 +87,5 @@ if __name__ == '__main__':
                                   verbose=2, dataframe_as_output=True)
 
     df_imputed = imp_mean.fit_transform(df)
-    # df_imputed=pd.DataFrame(df_imputed,columns=new_columns)
+    #df_imputed=pd.DataFrame(df_imputed,columns=columns)
     print(df_imputed.head())
