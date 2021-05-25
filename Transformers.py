@@ -1,3 +1,5 @@
+#https://github.com/scikit-learn-contrib/category_encoders/blob/master/category_encoders/one_hot.py
+#pip install category_encoders
 import pandas as pd
 import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -8,6 +10,7 @@ from sklearn.experimental import enable_iterative_imputer  # noqa
 # now you can import normally from sklearn.impute
 from sklearn.impute import IterativeImputer
 
+from category_encoders import one_hot
 
 class QuantileTransformerDf(QuantileTransformer):
     """DataFrame Wrapper around QuantileTransformer
@@ -25,6 +28,7 @@ class QuantileTransformerDf(QuantileTransformer):
         self.dataframe_as_output = dataframe_as_output
 
     def transform(self, X, y=None):
+        X = X.copy()
         z = super(QuantileTransformerDf, self).transform(X.values)
         if self.dataframe_as_output:
             return pd.DataFrame(z, index=X.index, columns=X.columns)
@@ -105,7 +109,7 @@ class RareLabelNanEncoder(BaseEstimator, TransformerMixin):
 
 
 class OneHotNanEncoder(BaseEstimator, TransformerMixin):
-    def __init__(self, categories='auto', drop=False, dtype=np.float64):
+    def __init__(self, categories='auto', drop=True, dtype=np.float64):
         super().__init__()
         self.categories = categories
         self.drop = drop
@@ -113,21 +117,36 @@ class OneHotNanEncoder(BaseEstimator, TransformerMixin):
         self.new_categories = []
 
     def fit(self, X, y=None):
-        X = X.copy()
+
         if self.categories == 'auto':
             self.categories = X.select_dtypes(include=['object']).columns.tolist()
+
+        # get new categories based on train data
+        for category in self.categories:
+            labels = X[category].unique().tolist()
+            labels = [str(x) for x in labels]  # converting nan to 'nan'
+            if 'nan' in labels:
+                labels.remove('nan')  # remove nan labels
+
+            for label in labels:
+                new_label = str(category) + '_' + str(label)
+                self.new_categories.append(new_label)
+
+        self.new_categories=list(set(self.new_categories)) #get unique elements
+        print(f'new_categories={self.new_categories}')
 
         return self
 
     def transform(self, X, y=None):
-
+        X = X.copy()
+        X[self.new_categories]=np.nan
+        """
         for category in self.categories:
             labels = X[category].unique().tolist()
             labels = [str(x) for x in labels]  # converting nan to 'nan
-            try:
+            if 'nan' in labels:
                 labels.remove('nan')  # remove nan labels
-            except:
-                pass
+
             for label in labels:
                 new_label = str(category) + '_' + str(label)
                 self.new_categories.append(new_label)
@@ -135,8 +154,10 @@ class OneHotNanEncoder(BaseEstimator, TransformerMixin):
                 X.loc[X[category].isna(), new_label] = np.nan
         if self.drop:
             X = X.drop(columns=self.categories)  # drop encoded columns
-        X[self.new_categories] = X[self.new_categories].astype(self.dtype)
+        # X[self.new_categories] = X[self.new_categories].astype(self.dtype)
+        """
         return X
+
 
 class IterativeImputerDf(IterativeImputer):
     """DataFrame Wrapper around QuantileTransformer
@@ -158,9 +179,11 @@ class IterativeImputerDf(IterativeImputer):
         self.dataframe_as_output = dataframe_as_output
 
     def transform(self, X, y=None):
+        X = X.copy()
         z = super(IterativeImputerDf, self).transform(X.values)
 
         if self.dataframe_as_output:
             return pd.DataFrame(z, index=X.index, columns=X.columns)
         else:
             return z
+
